@@ -7,41 +7,24 @@ import {
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function DrawerMenu(props) {
+export default function CustomDrawerContent(props) {
   return (
     <DrawerContentScrollView {...props} style={styles.container}>
-      {/* Header del Drawer */}
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <Ionicons name="shield-checkmark" size={40} color="#4361EE" />
-        </View>
+        <Ionicons name="shield-checkmark" size={40} color="#4361EE" />
         <Text style={styles.title}>EventGuard</Text>
         <Text style={styles.subtitle}>Verificador de Eventos</Text>
       </View>
-
-      {/* Items de navegación principales */}
+      
       <DrawerItemList {...props} />
-
-      {/* Sección inferior del Drawer */}
+      
       <View style={styles.footer}>
         <DrawerItem
           label="Configuración"
           icon={({ color, size }) => (
             <Ionicons name="settings-outline" color={color} size={size} />
           )}
-          onPress={() => {
-            vibrate('light'); // ✅ VIBRACIÓN AL NAVEGAR
-            console.log('Ir a Configuración');
-          }}
-          labelStyle={styles.drawerLabel}
-        />
-        <DrawerItem
-          label="Ayuda y Soporte"
-          icon={({ color, size }) => (
-            <Ionicons name="help-circle-outline" color={color} size={size} />
-          )}
-          onPress={() => console.log('Ir a Ayuda')}
-          labelStyle={styles.drawerLabel}
+          onPress={() => console.log('Configuración')}
         />
         <DrawerItem
           label="Cerrar Sesión"
@@ -49,7 +32,6 @@ export default function DrawerMenu(props) {
             <Ionicons name="log-out-outline" color={color} size={size} />
           )}
           onPress={() => console.log('Cerrar Sesión')}
-          labelStyle={[styles.drawerLabel, styles.logoutLabel]}
         />
       </View>
     </DrawerContentScrollView>
@@ -59,47 +41,27 @@ export default function DrawerMenu(props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
     alignItems: 'center',
-    backgroundColor: 'white',
-  },
-  logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#E7F3FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#4361EE',
-    marginBottom: 4,
+    marginTop: 10,
   },
   subtitle: {
     fontSize: 14,
     color: '#6C757D',
-    textAlign: 'center',
+    marginTop: 5,
   },
   footer: {
     borderTopWidth: 1,
     borderTopColor: '#E9ECEF',
     marginTop: 'auto',
-    paddingTop: 10,
-  },
-  drawerLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#343A40',
-  },
-  logoutLabel: {
-    color: '#FF6B6B',
   },
 });
