@@ -32,10 +32,19 @@ export default function MainTabNavigator() {
         options={{ title: 'Eventos' }} 
       />
       <Tab.Screen 
-        name="Scanner" 
-        component={ScannerScreen} 
-        options={{ title: 'Escanear QR' }} 
+  name="Scanner" 
+  component={ScannerScreen} 
+  options={{ 
+    title: 'Escanear QR',
+    tabBarIcon: ({ focused, color, size }) => (
+      <Ionicons 
+        name={focused ? 'qr-code' : 'qr-code-outline'} 
+        size={size} 
+        color={color} 
       />
+    )
+  }} 
+/>
       <Tab.Screen 
         name="Map" 
         component={MapScreen} 

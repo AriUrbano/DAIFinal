@@ -1,79 +1,140 @@
-// src/components/event/QRScanner.js (VERSIÓN TEMPORAL)
-import React, { useState, useEffect } from 'react';
-import { Text, View, StyleSheet, TouchableOpacity, Image } from 'react-native';
+// src/components/event/QRScanner.js
+import React, { useState } from 'react';
+import { Text, View, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+const { width } = Dimensions.get('window');
+const scannerSize = width * 0.7;
+
+// Servicio de vibración simulado
+const vibrate = (type = 'light') => {
+  console.log(`📳 Vibración simulada: ${type}`);
+};
+
 const QRScanner = ({ onQRScanned, scanned }) => {
-  const [hasPermission, setHasPermission] = useState(null);
-
-  // Simular permisos de cámara
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setHasPermission(true);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleDemoQR = () => {
-    if (!scanned) {
-      const demoQRData = JSON.stringify({
-        eventId: 'demo-123',
-        type: 'event_verification',
-        eventName: 'Conferencia de Tecnología 2024',
-        timestamp: new Date().toISOString(),
-        organizer: 'EventGuard Demo'
-      });
-      
-      onQRScanned({ type: 'qr', data: demoQRData });
+  const handleValidQRScan = () => {
+    if (scanned) return;
+    
+    console.log('✅ Simulando QR válido');
+    vibrate('success');
+    
+    const qrData = {
+      eventId: `event-${Date.now()}`,
+      type: 'event_verification',
+      eventName: 'Conferencia de Tecnología 2024',
+      timestamp: new Date().toISOString(),
+      organizer: 'TechCorp'
+    };
+    
+    if (onQRScanned && typeof onQRScanned === 'function') {
+      const scanResult = {
+        type: 'qr',
+        data: JSON.stringify(qrData)
+      };
+      console.log('📤 Enviando datos QR válido:', scanResult);
+      onQRScanned(scanResult);
+    } else {
+      console.error('❌ onQRScanned no es una función válida');
     }
   };
 
-  if (hasPermission === null) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.message}>Solicitando permiso para la cámara...</Text>
-      </View>
-    );
-  }
-
-  if (hasPermission === false) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorMessage}>
-          Se necesita acceso a la cámara para escanear códigos QR
-        </Text>
-      </View>
-    );
-  }
+  const handleInvalidQRScan = () => {
+    if (scanned) return;
+    
+    console.log('❌ Simulando QR inválido');
+    vibrate('error');
+    
+    if (onQRScanned && typeof onQRScanned === 'function') {
+      const scanResult = {
+        type: 'qr',
+        data: 'invalid_qr_data'
+      };
+      console.log('📤 Enviando QR inválido:', scanResult);
+      onQRScanned(scanResult);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {/* Simulador de cámara */}
-      <View style={styles.cameraSimulator}>
-        <View style={styles.scannerFrame}>
-          <View style={styles.cornerTopLeft} />
-          <View style={styles.cornerTopRight} />
-          <View style={styles.cornerBottomLeft} />
-          <View style={styles.cornerBottomRight} />
+      {/* Vista de cámara simulada */}
+      <View style={styles.cameraPlaceholder}>
+        <View style={styles.scannerArea}>
+          <View style={styles.scannerFrame}>
+            <View style={styles.cornerTopLeft} />
+            <View style={styles.cornerTopRight} />
+            <View style={styles.cornerBottomLeft} />
+            <View style={styles.cornerBottomRight} />
+            
+            {/* Línea de escaneo animada */}
+            <View style={styles.scanLine} />
+          </View>
         </View>
         
-        <View style={styles.demoSection}>
-          <Text style={styles.demoText}>
-            ⚠️ Módulo de cámara no disponible{'\n'}
-            Usando simulador de QR
+        <Ionicons name="qr-code-outline" size={60} color="#4361EE" style={styles.qrIcon} />
+        <Text style={styles.placeholderTitle}>Modo Simulación QR</Text>
+        <Text style={styles.placeholderText}>
+          Use los botones inferiores para simular el escaneo de códigos QR
+        </Text>
+      </View>
+
+      {/* Botones de simulación */}
+      <View style={styles.buttonsContainer}>
+        <TouchableOpacity 
+          style={[styles.button, styles.validButton]}
+          onPress={handleValidQRScan}
+          disabled={scanned}
+        >
+          <Ionicons name="checkmark-circle" size={24} color="white" />
+          <Text style={styles.buttonText}>Simular QR Válido</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.button, styles.invalidButton]}
+          onPress={handleInvalidQRScan}
+          disabled={scanned}
+        >
+          <Ionicons name="close-circle" size={24} color="white" />
+          <Text style={styles.buttonText}>Simular QR Inválido</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Estado del escáner */}
+      <View style={styles.statusContainer}>
+        <View style={styles.statusIndicator}>
+          <Ionicons 
+            name={scanned ? "checkmark-done-circle" : "scan-circle"} 
+            size={28} 
+            color={scanned ? "#06D6A0" : "#4361EE"} 
+          />
+          <Text style={[
+            styles.statusText,
+            scanned && styles.statusScanned
+          ]}>
+            {scanned ? 'QR Escaneado ✓' : 'Listo para escanear'}
           </Text>
-          
-          <TouchableOpacity 
-            style={styles.demoButton}
-            onPress={handleDemoQR}
-            disabled={scanned}
-          >
-            <Ionicons name="qr-code" size={24} color="white" />
-            <Text style={styles.demoButtonText}>
-              Escanear QR de Demo
-            </Text>
-          </TouchableOpacity>
+        </View>
+        
+        {scanned && (
+          <Text style={styles.instruction}>
+            Toque "Escanear Otro" en el modal para continuar
+          </Text>
+        )}
+      </View>
+
+      {/* Información de ayuda */}
+      <View style={styles.helpContainer}>
+        <Text style={styles.helpTitle}>Consejos para escaneo real:</Text>
+        <View style={styles.tipItem}>
+          <Ionicons name="sunny-outline" size={16} color="#FFD166" />
+          <Text style={styles.tipText}>Buena iluminación</Text>
+        </View>
+        <View style={styles.tipItem}>
+          <Ionicons name="hand-right-outline" size={16} color="#4361EE" />
+          <Text style={styles.tipText}>Mantenga estable el dispositivo</Text>
+        </View>
+        <View style={styles.tipItem}>
+          <Ionicons name="move-outline" size={16} color="#06D6A0" />
+          <Text style={styles.tipText}>Acerque gradualmente la cámara</Text>
         </View>
       </View>
     </View>
@@ -83,29 +144,36 @@ const QRScanner = ({ onQRScanned, scanned }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000',
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#000',
   },
-  cameraSimulator: {
+  cameraPlaceholder: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#1A1A1A',
+    padding: 20,
+  },
+  scannerArea: {
+    width: scannerSize,
+    height: scannerSize,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   scannerFrame: {
-    width: 250,
-    height: 250,
+    width: scannerSize - 20,
+    height: scannerSize - 20,
     borderWidth: 2,
-    borderColor: '#4361EE',
-    borderRadius: 12,
+    borderColor: 'transparent',
     position: 'relative',
-    marginBottom: 40,
+    backgroundColor: 'rgba(67, 97, 238, 0.1)',
   },
   cornerTopLeft: {
     position: 'absolute',
-    top: 0,
-    left: 0,
+    top: -2,
+    left: -2,
     borderLeftWidth: 4,
     borderTopWidth: 4,
     borderColor: '#4361EE',
@@ -114,8 +182,8 @@ const styles = StyleSheet.create({
   },
   cornerTopRight: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: -2,
+    right: -2,
     borderRightWidth: 4,
     borderTopWidth: 4,
     borderColor: '#4361EE',
@@ -124,8 +192,8 @@ const styles = StyleSheet.create({
   },
   cornerBottomLeft: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
+    bottom: -2,
+    left: -2,
     borderLeftWidth: 4,
     borderBottomWidth: 4,
     borderColor: '#4361EE',
@@ -134,48 +202,119 @@ const styles = StyleSheet.create({
   },
   cornerBottomRight: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
+    bottom: -2,
+    right: -2,
     borderRightWidth: 4,
     borderBottomWidth: 4,
     borderColor: '#4361EE',
     width: 30,
     height: 30,
   },
-  demoSection: {
-    alignItems: 'center',
+  scanLine: {
+    position: 'absolute',
+    top: '30%',
+    width: '100%',
+    height: 2,
+    backgroundColor: '#4361EE',
+    shadowColor: '#4361EE',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
   },
-  demoText: {
+  qrIcon: {
+    marginBottom: 15,
+    opacity: 0.7,
+  },
+  placeholderTitle: {
     color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
     textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 20,
   },
-  demoButton: {
+  placeholderText: {
+    color: '#CCCCCC',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    padding: 20,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    gap: 15,
+  },
+  button: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4361EE',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
+    justifyContent: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    borderRadius: 12,
     gap: 8,
+    maxWidth: 160,
   },
-  demoButtonText: {
+  validButton: {
+    backgroundColor: '#06D6A0',
+  },
+  invalidButton: {
+    backgroundColor: '#FF6B6B',
+  },
+  buttonText: {
     color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  statusContainer: {
+    padding: 15,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+  },
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  statusText: {
+    color: '#4361EE',
     fontSize: 16,
     fontWeight: '600',
   },
-  message: {
-    color: 'white',
-    textAlign: 'center',
-    marginTop: 20,
+  statusScanned: {
+    color: '#06D6A0',
   },
-  errorMessage: {
-    color: '#FF6B6B',
+  instruction: {
+    color: '#888888',
+    fontSize: 12,
+    marginTop: 8,
     textAlign: 'center',
-    marginTop: 20,
+    fontStyle: 'italic',
+  },
+  helpContainer: {
     padding: 20,
-    fontSize: 16,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  helpTitle: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    justifyContent: 'center',
+    gap: 8,
+  },
+  tipText: {
+    color: '#CCCCCC',
+    fontSize: 12,
   },
 });
 
