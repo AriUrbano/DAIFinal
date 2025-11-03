@@ -6,13 +6,14 @@ import {
   Dimensions,
   Alert,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import MapView, { Marker, Circle } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 
 // Servicios y Hooks
 import { useLocation } from '../hooks/useLocation';
-import { vibrate } from '../services/vibration'; // ✅ IMPORTACIÓN DE VIBRACIÓN
+import { vibrate } from '../services/vibration';
 
 // Datos
 import { mockEvents } from '../data/mockData';
@@ -20,7 +21,7 @@ import { mockEvents } from '../data/mockData';
 const { width, height } = Dimensions.get('window');
 
 export default function MapScreen() {
-  const { location, error: locationError } = useLocation();
+  const { location, error: locationError, permissionStatus, requestPermission, refetchLocation } = useLocation();
   const [region, setRegion] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
@@ -36,10 +37,22 @@ export default function MapScreen() {
     }
   }, [location]);
 
-  const handleEventPress = (event) => {
-    // ✅ VIBRACIÓN AL SELECCIONAR EVENTO
+  const handleRequestPermission = async () => {
     vibrate('medium');
+    const granted = await requestPermission();
     
+    if (granted) {
+      Alert.alert('Éxito', 'Permisos de ubicación concedidos');
+    }
+  };
+
+  const openSettings = () => {
+    vibrate('medium');
+    Linking.openSettings();
+  };
+
+  const handleEventPress = (event) => {
+    vibrate('medium');
     setSelectedEvent(event);
     Alert.alert(
       event.title,
@@ -50,7 +63,6 @@ export default function MapScreen() {
           text: 'Ver Detalles', 
           onPress: () => {
             console.log('Ver detalles del evento:', event.id);
-            // Vibración adicional al ver detalles
             vibrate('light');
           }
         }
@@ -59,9 +71,7 @@ export default function MapScreen() {
   };
 
   const handleUserLocationPress = () => {
-    // ✅ VIBRACIÓN AL TOCAR TU UBICACIÓN
     vibrate('light');
-    
     if (location) {
       setRegion({
         ...region,
@@ -74,26 +84,90 @@ export default function MapScreen() {
   };
 
   const handleMapPress = () => {
-    // ✅ VIBRACIÓN LIGERA AL TOCAR EL MAPA
     vibrate('light');
   };
 
-  if (locationError) {
+  // Pantalla de permisos denegados
+  if (permissionStatus === 'denied') {
+    return (
+      <View style={styles.container}>
+        <View style={styles.permissionContainer}>
+          <Ionicons name="location-off" size={80} color="#FF6B6B" />
+          <Text style={styles.permissionTitle}>Ubicación Requerida</Text>
+          <Text style={styles.permissionText}>
+            Esta aplicación necesita acceso a tu ubicación para mostrar eventos cercanos en el mapa.
+          </Text>
+          
+          <TouchableOpacity 
+            style={styles.settingsButton}
+            onPress={openSettings}
+          >
+            <Ionicons name="settings" size={20} color="white" />
+            <Text style={styles.settingsButtonText}>Abrir Configuración</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={handleRequestPermission}
+          >
+            <Text style={styles.retryButtonText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // Pantalla de permisos no determinados
+  if (permissionStatus === 'undetermined') {
+    return (
+      <View style={styles.container}>
+        <View style={styles.permissionContainer}>
+          <Ionicons name="location" size={80} color="#4361EE" />
+          <Text style={styles.permissionTitle}>Permiso de Ubicación</Text>
+          <Text style={styles.permissionText}>
+            Para una mejor experiencia, necesitamos acceso a tu ubicación para mostrarte eventos cercanos.
+          </Text>
+          
+          <TouchableOpacity 
+            style={styles.permissionButton}
+            onPress={handleRequestPermission}
+          >
+            <Ionicons name="location" size={20} color="white" />
+            <Text style={styles.permissionButtonText}>Permitir Ubicación</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.skipButton}
+            onPress={() => {
+              vibrate('light');
+              // Continuar sin ubicación
+              setRegion({
+                latitude: 40.4168, // Madrid por defecto
+                longitude: -3.7038,
+                latitudeDelta: 0.0922,
+                longitudeDelta: 0.0421,
+              });
+            }}
+          >
+            <Text style={styles.skipButtonText}>Continuar Sin Ubicación</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  if (locationError && permissionStatus !== 'denied') {
     return (
       <View style={styles.container}>
         <View style={styles.errorContainer}>
           <Ionicons name="location-off" size={60} color="#FF6B6B" />
-          <Text style={styles.errorTitle}>Ubicación No Disponible</Text>
+          <Text style={styles.errorTitle}>Error de Ubicación</Text>
           <Text style={styles.errorText}>
-            Active los servicios de ubicación para ver eventos en el mapa
+            {locationError}
           </Text>
           <TouchableOpacity 
             style={styles.retryButton}
-            onPress={() => {
-              vibrate('medium');
-              // Recargar la ubicación
-              window.location.reload();
-            }}
+            onPress={refetchLocation}
           >
             <Text style={styles.retryButtonText}>Reintentar</Text>
           </TouchableOpacity>
@@ -118,6 +192,21 @@ export default function MapScreen() {
       <View style={styles.header}>
         <Ionicons name="map" size={24} color="#4361EE" />
         <Text style={styles.title}>Mapa de Eventos</Text>
+        
+        {/* Indicador de estado de ubicación */}
+        <View style={styles.locationStatus}>
+          <Ionicons 
+            name={location ? "location" : "location-outline"} 
+            size={16} 
+            color={location ? "#06D6A0" : "#6C757D"} 
+          />
+          <Text style={[
+            styles.locationStatusText,
+            { color: location ? "#06D6A0" : "#6C757D" }
+          ]}>
+            {location ? 'Ubicación activa' : 'Buscando ubicación...'}
+          </Text>
+        </View>
       </View>
 
       <TouchableOpacity 
@@ -129,7 +218,7 @@ export default function MapScreen() {
           style={styles.map}
           region={region}
           onRegionChangeComplete={setRegion}
-          showsUserLocation={true}
+          showsUserLocation={!!location}
           showsMyLocationButton={false}
           onPress={handleMapPress}
         >
@@ -140,28 +229,11 @@ export default function MapScreen() {
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
               }}
-              radius={5000} // 5km en metros
+              radius={5000}
               strokeColor="#4361EE"
               strokeWidth={1}
               fillColor="rgba(67, 97, 238, 0.1)"
             />
-          )}
-
-          {/* Marcador del usuario */}
-          {location && (
-            <Marker
-              coordinate={{
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-              }}
-              title="Tu ubicación"
-              description="Estás aquí"
-              onPress={handleUserLocationPress}
-            >
-              <View style={styles.userMarker}>
-                <Ionicons name="person" size={16} color="white" />
-              </View>
-            </Marker>
           )}
 
           {/* Marcadores de eventos */}
@@ -198,7 +270,6 @@ export default function MapScreen() {
           <Text style={styles.legendText}>Radio 5km</Text>
         </View>
         
-        {/* Botón de prueba de vibración */}
         <TouchableOpacity 
           style={styles.vibrationTestButton}
           onPress={() => {
@@ -231,7 +302,81 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 10,
     color: '#343A40',
+    flex: 1,
   },
+  locationStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(67, 97, 238, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  locationStatusText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  permissionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#343A40',
+    marginTop: 16,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  permissionText: {
+    fontSize: 16,
+    color: '#6C757D',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 30,
+  },
+  permissionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4361EE',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+    gap: 8,
+  },
+  permissionButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  settingsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4361EE',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+    gap: 8,
+  },
+  settingsButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  skipButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+  },
+  skipButtonText: {
+    color: '#6C757D',
+    fontSize: 14,
+  },
+  // ... (mantén el resto de los estilos igual)
   mapContainer: {
     flex: 1,
   },

@@ -25,6 +25,14 @@
         {
           "cameraPermission": "Permitir a $(PRODUCT_NAME) acceder a la cámara para escanear códigos QR."
         }
+      ],
+        [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Permitir $(PRODUCT_NAME) usar tu ubicación.",
+          "locationAlwaysPermission": "Permitir $(PRODUCT_NAME) usar tu ubicación.",
+          "locationWhenInUsePermission": "Permitir $(PRODUCT_NAME) usar tu ubicación."
+        }
       ]
     ]
   }

@@ -114,14 +114,19 @@ export default function HomeScreen() {
       </View>
       
       {locationError && (
-        <View style={styles.warning}>
-          <Ionicons name="warning" size={20} color="#FF6B6B" />
-          <Text style={styles.warningText}>
-            {locationError}
-          </Text>
-        </View>
-      )}
-
+  <View style={styles.warning}>
+    <Ionicons name="warning" size={20} color="#FF6B6B" />
+    <Text style={styles.warningText}>
+      {locationError}
+    </Text>
+    <TouchableOpacity 
+      style={styles.retryButton}
+      onPress={() => refetchLocation()}
+    >
+      <Text style={styles.retryButtonText}>Reintentar</Text>
+    </TouchableOpacity>
+  </View>
+)}
       {events.length === 0 && !refreshing ? (
         <View style={styles.emptyState}>
           <Ionicons name="calendar-outline" size={60} color="#6C757D" />
@@ -203,4 +208,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
+  retryButton: {
+  backgroundColor: '#4361EE',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 6,
+  marginLeft: 10,
+},
+retryButtonText: {
+  color: 'white',
+  fontSize: 12,
+  fontWeight: '500',
+},
 });
