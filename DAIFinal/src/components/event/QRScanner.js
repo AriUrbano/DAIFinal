@@ -16,31 +16,32 @@ const scannerSize = width * 0.7;
 const QRScanner = ({ onQRScanned, scanned }) => {
   const [lastAction, setLastAction] = useState(null);
 
-  const handleValidQRScan = () => {
-    if (scanned) return;
-    
-    console.log('✅ Simulando QR válido');
-    setLastAction('valid');
-    
-    // ✅ DATOS MÁS SIMPLES Y SEGUROS
-    const qrData = {
-      eventId: "event-123456",
-      type: "event_verification",
-      eventName: "Conferencia Tech 2024"
-    };
-    
-    // ✅ CONVERTIR A JSON DE FORMA SEGURA
-    const jsonData = JSON.stringify(qrData);
-    console.log('📤 JSON a enviar:', jsonData);
-    
-    if (onQRScanned && typeof onQRScanned === 'function') {
-      onQRScanned({
-        type: 'qr',
-        data: jsonData
-      });
-    }
+ // En QRScanner.js - función handleValidQRScan
+const handleValidQRScan = () => {
+  if (scanned) return;
+  
+  console.log('✅ Simulando QR válido');
+  setLastAction('valid');
+  
+  // ✅ DATOS QUE COINCIDEN CON LA VALIDACIÓN
+  const qrData = {
+    eventId: "event-" + Date.now(),
+    type: "event_verification", 
+    eventName: "Conferencia Tech 2024",
+    organizer: "Tech Events Inc.",
+    timestamp: new Date().toISOString()
   };
-
+  
+  const jsonData = JSON.stringify(qrData);
+  console.log('📤 JSON a enviar:', jsonData);
+  
+  if (onQRScanned && typeof onQRScanned === 'function') {
+    onQRScanned({
+      type: 'qr',
+      data: jsonData
+    });
+  }
+};
   const handleInvalidQRScan = () => {
     if (scanned) return;
     
