@@ -19,19 +19,27 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
+     "plugins": [
       [
-        "expo-barcode-scanner",
+        "expo-notifications",
         {
-          "cameraPermission": "Permitir a $(PRODUCT_NAME) acceder a la cámara para escanear códigos QR."
+          "icon": "./assets/icon.png",
+          "color": "#4361EE",
+          "sounds": ["./assets/notification.wav"]
         }
       ],
-        [
+      [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Permitir $(PRODUCT_NAME) usar tu ubicación.",
           "locationAlwaysPermission": "Permitir $(PRODUCT_NAME) usar tu ubicación.",
           "locationWhenInUsePermission": "Permitir $(PRODUCT_NAME) usar tu ubicación."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permitir $(PRODUCT_NAME) acceder a tu cámara."
         }
       ]
     ]

@@ -55,8 +55,18 @@ const QRScanner = ({ onQRScanned, scanned }) => {
     }
   };
 
+  // ✅ CORRECCIÓN: Función reset mejorada
   const handleReset = () => {
+    console.log('🔄 Reiniciando simulación desde QRScanner');
     setLastAction(null);
+    
+    // Enviar señal de reset al padre
+    if (onQRScanned && typeof onQRScanned === 'function') {
+      onQRScanned({
+        type: 'reset',
+        data: ''
+      });
+    }
   };
 
   return (
@@ -100,7 +110,7 @@ const QRScanner = ({ onQRScanned, scanned }) => {
           </Text>
           <Text style={styles.placeholderText}>
             {scanned 
-              ? 'Ver resultado en el modal' 
+              ? 'Toque "Reiniciar Simulación" para escanear otro QR' 
               : 'Use los botones para simular escaneos'
             }
           </Text>
@@ -131,15 +141,24 @@ const QRScanner = ({ onQRScanned, scanned }) => {
           </TouchableOpacity>
         </View>
 
-        {scanned && (
-          <TouchableOpacity 
-            style={[styles.button, styles.resetButton]}
-            onPress={handleReset}
-          >
-            <Ionicons name="refresh" size={20} color="#4361EE" />
-            <Text style={styles.resetButtonText}>Reiniciar Simulación</Text>
-          </TouchableOpacity>
-        )}
+        {/* BOTÓN DE RESET - Siempre visible pero con estado diferente */}
+        <TouchableOpacity 
+          style={[
+            styles.button, 
+            styles.resetButton,
+            !scanned && styles.resetButtonInactive
+          ]}
+          onPress={handleReset}
+          disabled={!scanned}
+        >
+          <Ionicons name="refresh" size={20} color={scanned ? "#4361EE" : "#6C757D"} />
+          <Text style={[
+            styles.resetButtonText,
+            !scanned && styles.resetButtonTextInactive
+          ]}>
+            Reiniciar Simulación
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* SECCIÓN 3: ESTADO DEL ESCÁNER */}
@@ -163,48 +182,17 @@ const QRScanner = ({ onQRScanned, scanned }) => {
           
           {scanned && (
             <Text style={styles.instruction}>
-              Toque "Escanear Otro" en el modal para continuar
+              Toque "Reiniciar Simulación" para escanear otro QR
             </Text>
           )}
         </View>
       </View>
 
-      {/* SECCIÓN 4: CONSEJOS */}
-      <View style={styles.helpSection}>
-        <Text style={styles.sectionTitle}>Consejos para Escaneo Real</Text>
-        
-        <View style={styles.helpContainer}>
-          <View style={styles.tipItem}>
-            <Ionicons name="sunny-outline" size={20} color="#FFD166" />
-            <View style={styles.tipContent}>
-              <Text style={styles.tipTitle}>Buena Iluminación</Text>
-              <Text style={styles.tipText}>Asegúrate de tener suficiente luz para un escaneo rápido</Text>
-            </View>
-          </View>
-          
-          <View style={styles.tipItem}>
-            <Ionicons name="hand-right-outline" size={20} color="#4361EE" />
-            <View style={styles.tipContent}>
-              <Text style={styles.tipTitle}>Mantén Estable</Text>
-              <Text style={styles.tipText}>Sostén el dispositivo firme para evitar movimientos bruscos</Text>
-            </View>
-          </View>
-          
-          <View style={styles.tipItem}>
-            <Ionicons name="move-outline" size={20} color="#06D6A0" />
-            <View style={styles.tipContent}>
-              <Text style={styles.tipTitle}>Acerca Gradualmente</Text>
-              <Text style={styles.tipText}>Acerca la cámara al código QR de forma progresiva</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
+      {/* Resto del código se mantiene igual... */}
     </ScrollView>
   );
 };
 
-// ... (los estilos se mantienen igual que en tu código original)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -414,10 +402,17 @@ const styles = StyleSheet.create({
     borderColor: '#4361EE',
     paddingVertical: 14,
   },
+  resetButtonInactive: {
+    borderColor: '#E9ECEF',
+    opacity: 0.7,
+  },
   resetButtonText: {
     color: '#4361EE',
     fontSize: 15,
     fontWeight: '700',
+  },
+  resetButtonTextInactive: {
+    color: '#6C757D',
   },
   statusSection: {
     backgroundColor: 'white',
@@ -470,46 +465,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     paddingHorizontal: 10,
   },
-  helpSection: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: '#E9ECEF',
-  },
-  helpContainer: {
-    gap: 20,
-  },
-  tipItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 15,
-    padding: 15,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#4361EE',
-  },
-  tipContent: {
-    flex: 1,
-  },
-  tipTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#343A40',
-    marginBottom: 6,
-  },
-  tipText: {
-    fontSize: 14,
-    color: '#6C757D',
-    lineHeight: 20,
-  },
+  // ... (mantén el resto de los estilos igual)
 });
 
 export default QRScanner;
