@@ -16,32 +16,31 @@ const scannerSize = width * 0.7;
 const QRScanner = ({ onQRScanned, scanned }) => {
   const [lastAction, setLastAction] = useState(null);
 
- // En QRScanner.js - función handleValidQRScan
-const handleValidQRScan = () => {
-  if (scanned) return;
-  
-  console.log('✅ Simulando QR válido');
-  setLastAction('valid');
-  
-  // ✅ DATOS QUE COINCIDEN CON LA VALIDACIÓN
-  const qrData = {
-    eventId: "event-" + Date.now(),
-    type: "event_verification", 
-    eventName: "Conferencia Tech 2024",
-    organizer: "Tech Events Inc.",
-    timestamp: new Date().toISOString()
+  const handleValidQRScan = () => {
+    if (scanned) return;
+    
+    console.log('✅ Simulando QR válido');
+    setLastAction('valid');
+    
+    const qrData = {
+      eventId: "event-" + Date.now(),
+      type: "event_verification",
+      eventName: "Conferencia Tech 2024",
+      organizer: "Tech Events Inc.",
+      timestamp: new Date().toISOString()
+    };
+    
+    const jsonData = JSON.stringify(qrData);
+    console.log('📤 JSON a enviar:', jsonData);
+    
+    if (onQRScanned && typeof onQRScanned === 'function') {
+      onQRScanned({
+        type: 'qr',
+        data: jsonData
+      });
+    }
   };
-  
-  const jsonData = JSON.stringify(qrData);
-  console.log('📤 JSON a enviar:', jsonData);
-  
-  if (onQRScanned && typeof onQRScanned === 'function') {
-    onQRScanned({
-      type: 'qr',
-      data: jsonData
-    });
-  }
-};
+
   const handleInvalidQRScan = () => {
     if (scanned) return;
     
@@ -56,12 +55,8 @@ const handleValidQRScan = () => {
     }
   };
 
-  // ✅ FUNCIÓN HANDLE RESET QUE FALTABA
   const handleReset = () => {
     setLastAction(null);
-    if (onQRScanned && typeof onQRScanned === 'function') {
-      onQRScanned({ type: 'reset', data: '' });
-    }
   };
 
   return (
@@ -84,7 +79,6 @@ const handleValidQRScan = () => {
           
           <Ionicons name="qr-code-outline" size={60} color="#4361EE" style={styles.qrIcon} />
           
-          {/* INDICADOR DE ÚLTIMA ACCIÓN */}
           {lastAction && (
             <View style={[
               styles.actionIndicator,
@@ -137,7 +131,6 @@ const handleValidQRScan = () => {
           </TouchableOpacity>
         </View>
 
-        {/* BOTÓN DE RESET */}
         {scanned && (
           <TouchableOpacity 
             style={[styles.button, styles.resetButton]}
@@ -211,7 +204,7 @@ const handleValidQRScan = () => {
   );
 };
 
-// ESTILOS (usa el CSS completo que te di antes)
+// ... (los estilos se mantienen igual que en tu código original)
 const styles = StyleSheet.create({
   container: {
     flex: 1,

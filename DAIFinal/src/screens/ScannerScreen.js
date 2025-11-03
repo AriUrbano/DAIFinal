@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   StatusBar,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -15,19 +16,11 @@ import { Ionicons } from '@expo/vector-icons';
 import QRScanner from '../components/event/QRScanner';
 
 // Servicios simulados
-
-
-const sendVerificationNotification = (success, eventName) => {
-  console.log(`📢 Notificación: ${success ? 'Éxito' : 'Error'} - ${eventName || 'Evento'}`);
-};
+import { sendVerificationNotification } from '../services/notifications';
 
 const ScannerScreen = () => {
   const [scanned, setScanned] = useState(false);
-  const [result, setResult] = useState({
-  success: null,
-  message: '',
-  event: null
-});
+  const [result, setResult] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [scanHistory, setScanHistory] = useState([]);
 
@@ -38,71 +31,97 @@ const ScannerScreen = () => {
     };
   }, []);
 
- // En ScannerScreen.js - SIMPLIFICA la validación
-// En ScannerScreen.js - REEMPLAZA la función handleQRScanned completa
-const handleQRScanned = (scanResult) => {
-  console.log('🔍 QR recibido:', scanResult);
-  
-  if (!scanResult || !scanResult.data) {
-    console.error('❌ ScanResult o data es undefined');
-    return;
-  }
-  
-  setScanned(true);
-  
-  // ✅ CORRECCIÓN: Validación simplificada y correcta
-  if (scanResult.data === 'invalid_qr_data') {
-    console.log('❌ QR inválido detectado');
-    setResult({
-      success: false,
-      message: 'Código QR inválido o corrupto'
-    });
-  } else {
-    console.log('✅ QR válido detectado');
+  const handleQRScanned = (scanResult) => {
+    console.log('🔍 QR recibido:', scanResult);
     
-    try {
-      // Intentar parsear como JSON
-      const parsedData = JSON.parse(scanResult.data);
-      console.log('📊 Datos parseados:', parsedData);
+    if (!scanResult || !scanResult.data) {
+      console.error('❌ ScanResult o data es undefined');
+      return;
+    }
+    
+    setScanned(true);
+    
+    // ✅ ALERTAS REALES EN LA APP
+    if (scanResult.data === 'invalid_qr_data') {
+      console.log('❌ QR inválido detectado (SIMULADO)');
       
-      // Verificar si tiene la estructura esperada
-      if (parsedData.eventId && parsedData.eventName) {
+      // ✅ ALERTA NATIVA DE ERROR
+      Alert.alert(
+        '❌ Error de Verificación',
+        'El código QR escaneado no es válido',
+        [{ text: 'OK' }]
+      );
+      
+      setResult({
+        success: false,
+        message: 'Código QR inválido o corrupto (Simulación)'
+      });
+    } else {
+      console.log('✅ QR válido detectado (SIMULADO)');
+      
+      try {
+        const parsedData = JSON.parse(scanResult.data);
+        console.log('📊 Datos parseados:', parsedData);
+        
+        const eventName = parsedData.eventName || 'Evento de Demostración';
+        
+        // ✅ ALERTA NATIVA DE ÉXITO
+        Alert.alert(
+          '✅ Verificación Exitosa',
+          `"${eventName}" ha sido verificado correctamente`,
+          [{ text: 'OK' }]
+        );
+        
         setResult({
           success: true,
-          message: `Evento "${parsedData.eventName}" verificado exitosamente`,
+          message: `Evento "${eventName}" verificado exitosamente (Simulación)`,
           event: parsedData
         });
-      } else {
-        // Si no tiene la estructura completa pero es JSON válido
+        
+        // Agregar al historial
+        setScanHistory(prev => [{
+          id: Date.now().toString(),
+          success: true,
+          eventName: eventName,
+          eventId: parsedData.eventId,
+          timestamp: new Date().toLocaleTimeString()
+        }, ...prev.slice(0, 4)]); // Mantener solo últimos 5
+        
+      } catch (error) {
+        console.log('⚠️ QR no es JSON, pero es válido (SIMULADO):', scanResult.data);
+        
+        // ✅ ALERTA NATIVA DE ÉXITO PARA QR NO-JSON
+        Alert.alert(
+          '✅ Verificación Exitosa',
+          '"Evento Verificado" ha sido verificado correctamente',
+          [{ text: 'OK' }]
+        );
+        
         setResult({
           success: true,
-          message: 'Código QR verificado exitosamente',
+          message: 'Código QR verificado exitosamente (Simulación)',
           event: {
-            eventId: parsedData.eventId || 'default-id',
-            eventName: parsedData.eventName || 'Evento Verificado',
-            organizer: parsedData.organizer || 'Organizador no especificado',
-            timestamp: parsedData.timestamp || new Date().toISOString()
+            eventId: 'default-' + Date.now(),
+            eventName: 'Evento Verificado',
+            organizer: 'Sistema EventGuard',
+            timestamp: new Date().toISOString()
           }
         });
-      }
-    } catch (error) {
-      console.log('⚠️ QR no es JSON, pero es válido:', scanResult.data);
-      // Si no es JSON, crear datos por defecto
-      setResult({
-        success: true,
-        message: 'Código QR verificado exitosamente',
-        event: {
-          eventId: 'default-' + Date.now(),
+        
+        // Agregar al historial
+        setScanHistory(prev => [{
+          id: Date.now().toString(),
+          success: true,
           eventName: 'Evento Verificado',
-          organizer: 'Sistema EventGuard',
-          timestamp: new Date().toISOString()
-        }
-      });
+          eventId: 'default-id',
+          timestamp: new Date().toLocaleTimeString()
+        }, ...prev.slice(0, 4)]);
+      }
     }
-  }
-  
-  setModalVisible(true);
-};
+    
+    setModalVisible(true);
+  };
+
   const handleScanAgain = () => {
     console.log('🔄 Reiniciando escáner...');
     setScanned(false);
