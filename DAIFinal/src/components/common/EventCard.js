@@ -1,6 +1,8 @@
+// src/components/common/EventCard.js
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { vibrateLight } from '../../services/vibration'; // ✅ Importar vibración
 
 const EventCard = ({ event, onPress }) => {
   const formatDistance = (distance) => {
@@ -17,6 +19,14 @@ const EventCard = ({ event, onPress }) => {
     return 'upcoming';
   };
 
+  // ✅ FUNCIÓN QUE COMBINA VIBRACIÓN + onPress
+  const handlePress = () => {
+    vibrateLight(); // Vibración suave
+    if (onPress) {
+      onPress(); // Llamar a la función original
+    }
+  };
+
   const status = getEventStatus(event);
   
   const statusConfig = {
@@ -28,7 +38,8 @@ const EventCard = ({ event, onPress }) => {
   const config = statusConfig[status];
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress}>
+    // ✅ Cambiar onPress por handlePress
+    <TouchableOpacity style={styles.card} onPress={handlePress}>
       <View style={styles.cardHeader}>
         <Text style={styles.title} numberOfLines={2}>{event.title}</Text>
         <View style={[styles.status, { backgroundColor: config.color + '20' }]}>
@@ -71,6 +82,7 @@ const EventCard = ({ event, onPress }) => {
   );
 };
 
+// Los estilos se mantienen igual...
 const styles = StyleSheet.create({
   card: {
     backgroundColor: 'white',

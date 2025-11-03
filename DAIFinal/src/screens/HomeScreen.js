@@ -15,6 +15,7 @@ import Loading from '../components/common/Loading';
 
 // Servicios y Hooks
 import { useLocation } from '../hooks/useLocation';
+import { vibrateLight } from '../services/vibration'; // ✅ AGREGAR ESTA IMPORTACIÓN
 
 // Datos
 import { mockEvents, calculateDistance } from '../data/mockData';
@@ -74,6 +75,9 @@ export default function HomeScreen() {
   };
 
   const handleEventPress = (event) => {
+    // ✅ AGREGAR VIBRACIÓN AQUÍ
+    vibrateLight(); // Vibración suave al tocar cualquier evento
+    
     Alert.alert(
       event.title,
       `📍 ${event.location}\n📅 ${new Date(event.date).toLocaleDateString()}\n⏰ ${event.time}\n\n${event.description}`,
@@ -83,6 +87,8 @@ export default function HomeScreen() {
           text: 'Ver en Mapa', 
           onPress: () => {
             console.log('Navegar al mapa con evento:', event.id);
+            // Opcional: agregar vibración diferente para "Ver en Mapa"
+            vibrateLight();
           }
         }
       ]

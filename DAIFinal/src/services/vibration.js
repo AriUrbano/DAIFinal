@@ -1,5 +1,7 @@
+// src/services/vibration.js
 import * as Haptics from 'expo-haptics';
 
+// ✅ VIBRACIÓN REAL con expo-haptics
 export const vibrate = (type = 'light') => {
   try {
     switch (type) {
@@ -24,10 +26,9 @@ export const vibrate = (type = 'light') => {
       default:
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+    console.log(`📳 Vibración: ${type}`);
   } catch (error) {
-    console.error('Error en vibración:', error);
-    // Fallback para dispositivos sin haptics
-    // Podrías usar React Native's Vibration API aquí
+    console.log('📳 Vibración no disponible:', error);
   }
 };
 
