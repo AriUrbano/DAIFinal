@@ -9,6 +9,7 @@ import {
   TouchableOpacity, 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native'; // ✅ AGREGAR ESTA IMPORTACIÓN
 
 // Componentes
 import EventCard from '../components/common/EventCard';
@@ -16,12 +17,13 @@ import Loading from '../components/common/Loading';
 
 // Servicios y Hooks
 import { useLocation } from '../hooks/useLocation';
-import { vibrateLight } from '../services/vibration'; // ✅ AGREGAR ESTA IMPORTACIÓN
+import { vibrateLight } from '../services/vibration';
 
 // Datos
 import { mockEvents, calculateDistance } from '../data/mockData';
 
 export default function HomeScreen() {
+  const navigation = useNavigation(); // ✅ AGREGAR NAVEGACIÓN
   const [events, setEvents] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const { location, error: locationError } = useLocation();
@@ -39,7 +41,7 @@ export default function HomeScreen() {
       // Simular carga de datos
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      let processedEvents = [...mockEvents]; // Crear copia del array
+      let processedEvents = [...mockEvents];
       
       console.log(`📊 ${processedEvents.length} eventos encontrados`);
       
@@ -75,9 +77,19 @@ export default function HomeScreen() {
     }
   };
 
+  // ✅ FUNCIÓN PARA NAVEGAR AL MAPA CON EL EVENTO
+  const navigateToMapWithEvent = (event) => {
+    vibrateLight();
+    console.log('🗺️ Navegando al mapa con evento:', event.id);
+    
+    // Navegar al MapScreen y pasar el evento como parámetro
+    navigation.navigate('Map', { 
+      selectedEvent: event 
+    });
+  };
+
   const handleEventPress = (event) => {
-    // ✅ AGREGAR VIBRACIÓN AQUÍ
-    vibrateLight(); // Vibración suave al tocar cualquier evento
+    vibrateLight();
     
     Alert.alert(
       event.title,
@@ -86,11 +98,7 @@ export default function HomeScreen() {
         { text: 'OK', style: 'default' },
         { 
           text: 'Ver en Mapa', 
-          onPress: () => {
-            console.log('Navegar al mapa con evento:', event.id);
-            // Opcional: agregar vibración diferente para "Ver en Mapa"
-            vibrateLight();
-          }
+          onPress: () => navigateToMapWithEvent(event) // ✅ USAR LA NUEVA FUNCIÓN
         }
       ]
     );
@@ -115,19 +123,20 @@ export default function HomeScreen() {
       </View>
       
       {locationError && (
-  <View style={styles.warning}>
-    <Ionicons name="warning" size={20} color="#FF6B6B" />
-    <Text style={styles.warningText}>
-      {locationError}
-    </Text>
-    <TouchableOpacity 
-      style={styles.retryButton}
-      onPress={() => refetchLocation()}
-    >
-      <Text style={styles.retryButtonText}>Reintentar</Text>
-    </TouchableOpacity>
-  </View>
-)}
+        <View style={styles.warning}>
+          <Ionicons name="warning" size={20} color="#FF6B6B" />
+          <Text style={styles.warningText}>
+            {locationError}
+          </Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={() => refetchLocation()}
+          >
+            <Text style={styles.retryButtonText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
       {events.length === 0 && !refreshing ? (
         <View style={styles.emptyState}>
           <Ionicons name="calendar-outline" size={60} color="#6C757D" />
@@ -210,15 +219,15 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   retryButton: {
-  backgroundColor: '#4361EE',
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  borderRadius: 6,
-  marginLeft: 10,
-},
-retryButtonText: {
-  color: 'white',
-  fontSize: 12,
-  fontWeight: '500',
-},
+    backgroundColor: '#4361EE',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginLeft: 10,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
+  },
 });

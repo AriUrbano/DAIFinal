@@ -20,13 +20,42 @@ import { mockEvents } from '../data/mockData';
 
 const { width, height } = Dimensions.get('window');
 
-export default function MapScreen() {
+export default function MapScreen({ route }) {
   const { location, error: locationError, permissionStatus, requestPermission, refetchLocation } = useLocation();
   const [region, setRegion] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [highlightedEvent, setHighlightedEvent] = useState(null);
+
+  // ✅ RECIBIR EL EVENTO SELECCIONADO DESDE HOME SCREEN
+  useEffect(() => {
+    if (route.params?.selectedEvent) {
+      const event = route.params.selectedEvent;
+      setHighlightedEvent(event);
+      setSelectedEvent(event);
+      
+      // Centrar el mapa en el evento seleccionado
+      setRegion({
+        latitude: event.latitude,
+        longitude: event.longitude,
+        latitudeDelta: 0.01, // Zoom más cercano
+        longitudeDelta: 0.01,
+      });
+      
+      console.log('🗺️ Evento recibido en mapa:', event.title);
+      
+      // Mostrar alerta automáticamente
+      setTimeout(() => {
+        Alert.alert(
+          event.title,
+          `📍 ${event.location}\n📅 ${new Date(event.date).toLocaleDateString()}\n⏰ ${event.time}\n\n${event.description}`,
+          [{ text: 'OK', style: 'default' }]
+        );
+      }, 500);
+    }
+  }, [route.params]);
 
   useEffect(() => {
-    if (location) {
+    if (location && !route.params?.selectedEvent) {
       const newRegion = {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
@@ -35,7 +64,7 @@ export default function MapScreen() {
       };
       setRegion(newRegion);
     }
-  }, [location]);
+  }, [location, route.params]);
 
   const handleRequestPermission = async () => {
     vibrate('medium');
@@ -85,6 +114,20 @@ export default function MapScreen() {
 
   const handleMapPress = () => {
     vibrate('light');
+    // Limpiar evento destacado cuando se toca el mapa
+    setHighlightedEvent(null);
+  };
+
+  const centerOnUserLocation = () => {
+    vibrate('light');
+    if (location) {
+      setRegion({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      });
+    }
   };
 
   // Pantalla de permisos denegados
@@ -248,13 +291,39 @@ export default function MapScreen() {
               description={event.location}
               onPress={() => handleEventPress(event)}
             >
-              <View style={styles.eventMarker}>
-                <Ionicons name="calendar" size={14} color="white" />
+              <View style={[
+                styles.eventMarker,
+                highlightedEvent?.id === event.id && styles.highlightedMarker
+              ]}>
+                <Ionicons 
+                  name="calendar" 
+                  size={14} 
+                  color={highlightedEvent?.id === event.id ? "#FFD700" : "white"} 
+                />
               </View>
             </Marker>
           ))}
         </MapView>
       </TouchableOpacity>
+
+      {/* ✅ BOTÓN PARA CENTRAR EN UBICACIÓN DEL USUARIO */}
+      <TouchableOpacity 
+        style={styles.centerButton}
+        onPress={centerOnUserLocation}
+      >
+        <Ionicons name="locate" size={24} color="#4361EE" />
+      </TouchableOpacity>
+
+      {/* ✅ INFORMACIÓN DEL EVENTO DESTACADO */}
+      {highlightedEvent && (
+        <View style={styles.highlightedEventInfo}>
+          <Text style={styles.highlightedEventTitle}>{highlightedEvent.title}</Text>
+          <Text style={styles.highlightedEventLocation}>📍 {highlightedEvent.location}</Text>
+          <Text style={styles.highlightedEventDate}>
+            📅 {new Date(highlightedEvent.date).toLocaleDateString()} ⏰ {highlightedEvent.time}
+          </Text>
+        </View>
+      )}
 
       <View style={styles.legend}>
         <View style={styles.legendItem}>
@@ -266,20 +335,13 @@ export default function MapScreen() {
           <Text style={styles.legendText}>Eventos</Text>
         </View>
         <View style={styles.legendItem}>
+          <View style={[styles.legendColor, styles.highlightedColor]} />
+          <Text style={styles.legendText}>Seleccionado</Text>
+        </View>
+        <View style={styles.legendItem}>
           <View style={[styles.legendColor, styles.areaColor]} />
           <Text style={styles.legendText}>Radio 5km</Text>
         </View>
-        
-        <TouchableOpacity 
-          style={styles.vibrationTestButton}
-          onPress={() => {
-            vibrate('success');
-            Alert.alert('Vibración', '✅ Vibración de prueba activada');
-          }}
-        >
-          <Ionicons name="vibrate" size={16} color="#4361EE" />
-          <Text style={styles.vibrationTestText}>Probar Vibración</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -317,6 +379,107 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 4,
   },
+  mapContainer: {
+    flex: 1,
+  },
+  map: {
+    width: width,
+    height: height - 200,
+  },
+  eventMarker: {
+    backgroundColor: '#06D6A0',
+    padding: 6,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  highlightedMarker: {
+    backgroundColor: '#FF6B6B',
+    padding: 8,
+    borderRadius: 18,
+    borderWidth: 3,
+    borderColor: '#FFD700',
+  },
+  // ✅ NUEVOS ESTILOS PARA EL EVENTO DESTACADO
+  highlightedEventInfo: {
+    position: 'absolute',
+    top: 120,
+    left: 16,
+    right: 16,
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  highlightedEventTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#343A40',
+    marginBottom: 4,
+  },
+  highlightedEventLocation: {
+    fontSize: 14,
+    color: '#4361EE',
+    marginBottom: 2,
+  },
+  highlightedEventDate: {
+    fontSize: 12,
+    color: '#6C757D',
+  },
+  // ✅ BOTÓN PARA CENTRAR EN UBICACIÓN
+  centerButton: {
+    position: 'absolute',
+    bottom: 100,
+    right: 16,
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 30,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  legend: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: 'white',
+    borderTopWidth: 1,
+    borderTopColor: '#E9ECEF',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  legendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6,
+  },
+  userColor: {
+    backgroundColor: '#4361EE',
+  },
+  eventColor: {
+    backgroundColor: '#06D6A0',
+  },
+  highlightedColor: {
+    backgroundColor: '#FF6B6B',
+  },
+  areaColor: {
+    backgroundColor: 'rgba(67, 97, 238, 0.3)',
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#6C757D',
+  },
+  // ... (mantén el resto de los estilos igual)
   permissionContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -375,74 +538,6 @@ const styles = StyleSheet.create({
   skipButtonText: {
     color: '#6C757D',
     fontSize: 14,
-  },
-  // ... (mantén el resto de los estilos igual)
-  mapContainer: {
-    flex: 1,
-  },
-  map: {
-    width: width,
-    height: height - 200,
-  },
-  userMarker: {
-    backgroundColor: '#4361EE',
-    padding: 8,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  eventMarker: {
-    backgroundColor: '#06D6A0',
-    padding: 6,
-    borderRadius: 15,
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  legend: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 6,
-  },
-  userColor: {
-    backgroundColor: '#4361EE',
-  },
-  eventColor: {
-    backgroundColor: '#06D6A0',
-  },
-  areaColor: {
-    backgroundColor: 'rgba(67, 97, 238, 0.3)',
-  },
-  legendText: {
-    fontSize: 12,
-    color: '#6C757D',
-  },
-  vibrationTestButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(67, 97, 238, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    gap: 4,
-  },
-  vibrationTestText: {
-    fontSize: 12,
-    color: '#4361EE',
-    fontWeight: '500',
   },
   errorContainer: {
     flex: 1,

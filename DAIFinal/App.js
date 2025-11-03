@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 // Servicios
 import { setupLocationTracking } from './src/services/location';
@@ -15,9 +16,7 @@ const Drawer = createDrawerNavigator();
 
 export default function App() {
   useEffect(() => {
-    // SOLO configurar location - NO notificaciones push
     setupLocationTracking();
-    
     console.log('🚀 EventGuard iniciado - Modo Expo Go');
   }, []);
 
@@ -26,7 +25,7 @@ export default function App() {
       <NavigationContainer>
         <Drawer.Navigator 
           drawerContent={(props) => <DrawerMenu {...props} />}
-          screenOptions={{
+          screenOptions={({ navigation }) => ({
             headerStyle: {
               backgroundColor: '#4361EE',
             },
@@ -37,14 +36,29 @@ export default function App() {
             drawerStyle: {
               backgroundColor: '#F8F9FA',
             },
-          }}
+            drawerActiveTintColor: '#4361EE',
+            drawerInactiveTintColor: '#6C757D',
+            // ✅ BOTÓN HAMBURGUESA REAL
+            headerLeft: () => (
+              <Ionicons 
+                name="menu" 
+                size={28} 
+                color="white" 
+                style={{ marginLeft: 15 }}
+                onPress={() => navigation.toggleDrawer()}
+              />
+            ),
+          })}
         >
           <Drawer.Screen 
-            name="Main" 
+            name="EventGuard" 
             component={MainTabNavigator}
             options={{ 
               title: 'EventGuard',
-              headerShown: false 
+              headerShown: false,
+              drawerIcon: ({ color, size }) => (
+                <Ionicons name="home-outline" size={size} color={color} />
+              ),
             }} 
           />
         </Drawer.Navigator>

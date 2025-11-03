@@ -8,15 +8,16 @@ import {
   TouchableOpacity,
   StatusBar,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 // Componentes
 import QRScanner from '../components/event/QRScanner';
 
-// Servicios simulados
-import { sendVerificationNotification } from '../services/notifications';
+// Servicios
+import { 
+  sendVerificationNotification
+} from '../services/notifications';
 
 const ScannerScreen = () => {
   const [scanned, setScanned] = useState(false);
@@ -31,104 +32,94 @@ const ScannerScreen = () => {
     };
   }, []);
 
-  // En ScannerScreen.js - actualiza la función handleQRScanned
-const handleQRScanned = (scanResult) => {
-  console.log('🔍 QR recibido:', scanResult);
-  
-  // ✅ MANEJAR RESET
-  if (scanResult.type === 'reset') {
-    console.log('🔄 Reset recibido desde QRScanner');
-    setScanned(false);
-    setResult(null);
-    setModalVisible(false);
-    return;
-  }
-  
-  if (!scanResult || !scanResult.data) {
-    console.error('❌ ScanResult o data es undefined');
-    return;
-  }
-  
-  setScanned(true);
-  
-  // Resto del código de validación permanece igual...
-  if (scanResult.data === 'invalid_qr_data') {
-    console.log('❌ QR inválido detectado (SIMULADO)');
+  // ✅ FUNCIÓN HANDLE QR SCANNED CORREGIDA
+  const handleQRScanned = async (scanResult) => {
+    console.log('🔍 QR recibido:', scanResult);
     
-    Alert.alert(
-      '❌ Error de Verificación',
-      'El código QR escaneado no es válido',
-      [{ text: 'OK' }]
-    );
-    
-    setResult({
-      success: false,
-      message: 'Código QR inválido o corrupto (Simulación)'
-    });
-  } else {
-    console.log('✅ QR válido detectado (SIMULADO)');
-    
-    try {
-      const parsedData = JSON.parse(scanResult.data);
-      console.log('📊 Datos parseados:', parsedData);
-      
-      const eventName = parsedData.eventName || 'Evento de Demostración';
-      
-      Alert.alert(
-        '✅ Verificación Exitosa',
-        `"${eventName}" ha sido verificado correctamente`,
-        [{ text: 'OK' }]
-      );
-      
-      setResult({
-        success: true,
-        message: `Evento "${eventName}" verificado exitosamente (Simulación)`,
-        event: parsedData
-      });
-      
-      setScanHistory(prev => [{
-        id: Date.now().toString(),
-        success: true,
-        eventName: eventName,
-        eventId: parsedData.eventId,
-        timestamp: new Date().toLocaleTimeString()
-      }, ...prev.slice(0, 4)]);
-      
-    } catch (error) {
-      console.log('⚠️ QR no es JSON, pero es válido (SIMULADO):', scanResult.data);
-      
-      Alert.alert(
-        '✅ Verificación Exitosa',
-        '"Evento Verificado" ha sido verificado correctamente',
-        [{ text: 'OK' }]
-      );
-      
-      setResult({
-        success: true,
-        message: 'Código QR verificado exitosamente (Simulación)',
-        event: {
-          eventId: 'default-' + Date.now(),
-          eventName: 'Evento Verificado',
-          organizer: 'Sistema EventGuard',
-          timestamp: new Date().toISOString()
-        }
-      });
-      
-      setScanHistory(prev => [{
-        id: Date.now().toString(),
-        success: true,
-        eventName: 'Evento Verificado',
-        eventId: 'default-id',
-        timestamp: new Date().toLocaleTimeString()
-      }, ...prev.slice(0, 4)]);
+    // ✅ MANEJAR RESET PRIMERO
+    if (scanResult.type === 'reset') {
+      console.log('🔄 Reset recibido desde QRScanner');
+      setScanned(false);
+      setResult(null);
+      setModalVisible(false);
+      return;
     }
-  }
-  
-  setModalVisible(true);
-};
+    
+    if (!scanResult || !scanResult.data) {
+      console.error('❌ ScanResult o data es undefined');
+      return;
+    }
+    
+    setScanned(true);
+    
+    // ✅ NOTIFICACIONES NATIVAS
+    if (scanResult.data === 'invalid_qr_data') {
+      console.log('❌ QR inválido detectado (SIMULADO)');
+      
+      await sendVerificationNotification(false, '');
+      
+      setResult({
+        success: false,
+        message: 'Código QR inválido o corrupto (Simulación)'
+      });
+    } else {
+      console.log('✅ QR válido detectado (SIMULADO)');
+      
+      try {
+        const parsedData = JSON.parse(scanResult.data);
+        console.log('📊 Datos parseados:', parsedData);
+        
+        const eventName = parsedData.eventName || 'Evento de Demostración';
+        
+        await sendVerificationNotification(true, eventName);
+        
+        setResult({
+          success: true,
+          message: `Evento "${eventName}" verificado exitosamente (Simulación)`,
+          event: parsedData
+        });
+        
+        // Agregar al historial
+        setScanHistory(prev => [{
+          id: Date.now().toString(),
+          success: true,
+          eventName: eventName,
+          eventId: parsedData.eventId,
+          timestamp: new Date().toLocaleTimeString()
+        }, ...prev.slice(0, 4)]);
+        
+      } catch (error) {
+        console.log('⚠️ QR no es JSON, pero es válido (SIMULADO):', scanResult.data);
+        
+        await sendVerificationNotification(true, 'Evento Verificado');
+        
+        setResult({
+          success: true,
+          message: 'Código QR verificado exitosamente (Simulación)',
+          event: {
+            eventId: 'default-' + Date.now(),
+            eventName: 'Evento Verificado',
+            organizer: 'Sistema EventGuard',
+            timestamp: new Date().toISOString()
+          }
+        });
+        
+        // Agregar al historial
+        setScanHistory(prev => [{
+          id: Date.now().toString(),
+          success: true,
+          eventName: 'Evento Verificado',
+          eventId: 'default-id',
+          timestamp: new Date().toLocaleTimeString()
+        }, ...prev.slice(0, 4)]);
+      }
+    }
+    
+    setModalVisible(true);
+  };
 
   const handleScanAgain = () => {
-    console.log('🔄 Reiniciando escáner...');
+    console.log('🔄 Reiniciando escáner desde modal...');
     setScanned(false);
     setResult(null);
     setModalVisible(false);
@@ -158,9 +149,14 @@ const handleQRScanned = (scanResult) => {
       {/* Instrucciones */}
       <View style={styles.instructionsContainer}>
         <Ionicons name="information-circle" size={20} color="#4361EE" />
-        <Text style={styles.instructions}>
-          Use la interfaz de simulación para probar el escaneo de códigos QR
-        </Text>
+        <View style={styles.instructionsContent}>
+          <Text style={styles.instructions}>
+            Use la interfaz de simulación para probar el escaneo de códigos QR
+          </Text>
+          <Text style={styles.notificationHint}>
+            📲 Las notificaciones aparecerán en tu centro de notificaciones
+          </Text>
+        </View>
       </View>
 
       {/* Contenedor del Scanner */}
@@ -232,6 +228,13 @@ const handleQRScanned = (scanResult) => {
               {result?.message}
             </Text>
 
+            <View style={styles.notificationInfo}>
+              <Ionicons name="notifications" size={20} color="#4361EE" />
+              <Text style={styles.notificationInfoText}>
+                Se ha enviado una notificación a tu dispositivo
+              </Text>
+            </View>
+
             {result?.success && result?.event && (
               <View style={styles.eventInfo}>
                 <Text style={styles.eventName}>{result.event.eventName}</Text>
@@ -268,6 +271,7 @@ const handleQRScanned = (scanResult) => {
   );
 };
 
+// Los estilos se mantienen igual que en tu código anterior
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -299,7 +303,7 @@ const styles = StyleSheet.create({
   },
   instructionsContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: 16,
     backgroundColor: '#E7F3FF',
     marginHorizontal: 16,
@@ -307,11 +311,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 10,
   },
-  instructions: {
+  instructionsContent: {
     flex: 1,
+  },
+  instructions: {
     fontSize: 14,
     color: '#4361EE',
     lineHeight: 20,
+    marginBottom: 4,
+  },
+  notificationHint: {
+    fontSize: 12,
+    color: '#4361EE',
+    fontStyle: 'italic',
   },
   scannerContainer: {
     flex: 1,
@@ -440,6 +452,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     lineHeight: 22,
     color: '#6C757D',
+  },
+  notificationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+    gap: 8,
+  },
+  notificationInfoText: {
+    fontSize: 14,
+    color: '#4361EE',
+    fontWeight: '500',
   },
   eventInfo: {
     backgroundColor: '#F8F9FA',

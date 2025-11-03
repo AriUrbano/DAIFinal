@@ -10,6 +10,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+// ✅ IMPORTAR VIBRACIÓN
+import { vibrate } from '../../services/vibration';
+
 const { width } = Dimensions.get('window');
 const scannerSize = width * 0.7;
 
@@ -21,6 +24,7 @@ const QRScanner = ({ onQRScanned, scanned }) => {
     
     console.log('✅ Simulando QR válido');
     setLastAction('valid');
+    vibrate('light');
     
     const qrData = {
       eventId: "event-" + Date.now(),
@@ -46,6 +50,7 @@ const QRScanner = ({ onQRScanned, scanned }) => {
     
     console.log('❌ Simulando QR inválido');
     setLastAction('invalid');
+    vibrate('medium');
     
     if (onQRScanned && typeof onQRScanned === 'function') {
       onQRScanned({
@@ -55,12 +60,14 @@ const QRScanner = ({ onQRScanned, scanned }) => {
     }
   };
 
-  // ✅ CORRECCIÓN: Función reset mejorada
+  // ✅ FUNCIÓN RESET CORREGIDA
   const handleReset = () => {
     console.log('🔄 Reiniciando simulación desde QRScanner');
+    vibrate('light');
+    
     setLastAction(null);
     
-    // Enviar señal de reset al padre
+    // ✅ ENVIAR SEÑAL DE RESET CORRECTAMENTE
     if (onQRScanned && typeof onQRScanned === 'function') {
       onQRScanned({
         type: 'reset',
@@ -141,24 +148,16 @@ const QRScanner = ({ onQRScanned, scanned }) => {
           </TouchableOpacity>
         </View>
 
-        {/* BOTÓN DE RESET - Siempre visible pero con estado diferente */}
-        <TouchableOpacity 
-          style={[
-            styles.button, 
-            styles.resetButton,
-            !scanned && styles.resetButtonInactive
-          ]}
-          onPress={handleReset}
-          disabled={!scanned}
-        >
-          <Ionicons name="refresh" size={20} color={scanned ? "#4361EE" : "#6C757D"} />
-          <Text style={[
-            styles.resetButtonText,
-            !scanned && styles.resetButtonTextInactive
-          ]}>
-            Reiniciar Simulación
-          </Text>
-        </TouchableOpacity>
+        {/* ✅ BOTÓN DE RESET - SOLO VISIBLE CUANDO scanned ES TRUE */}
+        {scanned && (
+          <TouchableOpacity 
+            style={[styles.button, styles.resetButton]}
+            onPress={handleReset}
+          >
+            <Ionicons name="refresh" size={20} color="#4361EE" />
+            <Text style={styles.resetButtonText}>Reiniciar Simulación</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* SECCIÓN 3: ESTADO DEL ESCÁNER */}
@@ -188,7 +187,37 @@ const QRScanner = ({ onQRScanned, scanned }) => {
         </View>
       </View>
 
-      {/* Resto del código se mantiene igual... */}
+      {/* SECCIÓN 4: CONSEJOS */}
+      <View style={styles.helpSection}>
+        <Text style={styles.sectionTitle}>Consejos para Escaneo Real</Text>
+        
+        <View style={styles.helpContainer}>
+          <View style={styles.tipItem}>
+            <Ionicons name="sunny-outline" size={20} color="#FFD166" />
+            <View style={styles.tipContent}>
+              <Text style={styles.tipTitle}>Buena Iluminación</Text>
+              <Text style={styles.tipText}>Asegúrate de tener suficiente luz para un escaneo rápido</Text>
+            </View>
+          </View>
+          
+          <View style={styles.tipItem}>
+            <Ionicons name="hand-right-outline" size={20} color="#4361EE" />
+            <View style={styles.tipContent}>
+              <Text style={styles.tipTitle}>Mantén Estable</Text>
+              <Text style={styles.tipText}>Sostén el dispositivo firme para evitar movimientos bruscos</Text>
+            </View>
+          </View>
+          
+          <View style={styles.tipItem}>
+            <Ionicons name="move-outline" size={20} color="#06D6A0" />
+            <View style={styles.tipContent}>
+              <Text style={styles.tipTitle}>Acerca Gradualmente</Text>
+              <Text style={styles.tipText}>Acerca la cámara al código QR de forma progresiva</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
     </ScrollView>
   );
 };
@@ -388,7 +417,6 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
-    shadowOpacity: 0.05,
   },
   buttonText: {
     color: 'white',
@@ -402,17 +430,10 @@ const styles = StyleSheet.create({
     borderColor: '#4361EE',
     paddingVertical: 14,
   },
-  resetButtonInactive: {
-    borderColor: '#E9ECEF',
-    opacity: 0.7,
-  },
   resetButtonText: {
     color: '#4361EE',
     fontSize: 15,
     fontWeight: '700',
-  },
-  resetButtonTextInactive: {
-    color: '#6C757D',
   },
   statusSection: {
     backgroundColor: 'white',
@@ -465,7 +486,46 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     paddingHorizontal: 10,
   },
-  // ... (mantén el resto de los estilos igual)
+  helpSection: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+  },
+  helpContainer: {
+    gap: 20,
+  },
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 15,
+    padding: 15,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4361EE',
+  },
+  tipContent: {
+    flex: 1,
+  },
+  tipTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#343A40',
+    marginBottom: 6,
+  },
+  tipText: {
+    fontSize: 14,
+    color: '#6C757D',
+    lineHeight: 20,
+  },
 });
 
 export default QRScanner;

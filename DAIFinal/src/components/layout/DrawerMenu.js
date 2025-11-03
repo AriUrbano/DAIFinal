@@ -1,16 +1,33 @@
+// src/components/layout/DrawerMenu.js
 import React from 'react';
 import {
   DrawerContentScrollView,
-  DrawerItemList,
   DrawerItem,
 } from '@react-navigation/drawer';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { vibrate } from '../../services/vibration';
 
 export default function DrawerMenu(props) {
+  // ✅ FUNCIÓN QUE SOLO VIBRA
+  const handleConfigPress = () => {
+    vibrate('light'); // ✅ VIBRA AL TOCAR
+    console.log('Ir a Configuración - Vibrando');
+  };
+
+  const handleHelpPress = () => {
+    vibrate('light');
+    console.log('Ayuda y Soporte');
+  };
+
+  const handleLogoutPress = () => {
+    vibrate('medium');
+    console.log('Cerrar Sesión');
+  };
+
   return (
     <DrawerContentScrollView {...props} style={styles.container}>
-      {/* Header del Drawer */}
+      {/* Header del Drawer SOLO CON LOGO */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <Ionicons name="shield-checkmark" size={40} color="#4361EE" />
@@ -19,39 +36,33 @@ export default function DrawerMenu(props) {
         <Text style={styles.subtitle}>Verificador de Eventos</Text>
       </View>
 
-      {/* Items de navegación principales */}
-      <DrawerItemList {...props} />
+      {/* ✅ "IR A CONFIGURACIÓN" AHORA VIBRA */}
+      <DrawerItem
+        label="Ir a Configuración"
+        icon={({ color, size }) => (
+          <Ionicons name="settings-outline" color={color} size={size} />
+        )}
+        onPress={handleConfigPress} // ✅ AHORA VIBRA
+        labelStyle={styles.drawerLabel}
+      />
 
-      {/* Sección inferior del Drawer */}
-      <View style={styles.footer}>
-        <DrawerItem
-          label="Configuración"
-          icon={({ color, size }) => (
-            <Ionicons name="settings-outline" color={color} size={size} />
-          )}
-          onPress={() => {
-            vibrate('light'); // ✅ VIBRACIÓN AL NAVEGAR
-            console.log('Ir a Configuración');
-          }}
-          labelStyle={styles.drawerLabel}
-        />
-        <DrawerItem
-          label="Ayuda y Soporte"
-          icon={({ color, size }) => (
-            <Ionicons name="help-circle-outline" color={color} size={size} />
-          )}
-          onPress={() => console.log('Ir a Ayuda')}
-          labelStyle={styles.drawerLabel}
-        />
-        <DrawerItem
-          label="Cerrar Sesión"
-          icon={({ color, size }) => (
-            <Ionicons name="log-out-outline" color={color} size={size} />
-          )}
-          onPress={() => console.log('Cerrar Sesión')}
-          labelStyle={[styles.drawerLabel, styles.logoutLabel]}
-        />
-      </View>
+      <DrawerItem
+        label="Ayuda y Soporte"
+        icon={({ color, size }) => (
+          <Ionicons name="help-circle-outline" color={color} size={size} />
+        )}
+        onPress={handleHelpPress}
+        labelStyle={styles.drawerLabel}
+      />
+
+      <DrawerItem
+        label="Cerrar Sesión"
+        icon={({ color, size }) => (
+          <Ionicons name="log-out-outline" color={color} size={size} />
+        )}
+        onPress={handleLogoutPress}
+        labelStyle={[styles.drawerLabel, styles.logoutLabel]}
+      />
     </DrawerContentScrollView>
   );
 }
@@ -87,12 +98,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6C757D',
     textAlign: 'center',
-  },
-  footer: {
-    borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
-    marginTop: 'auto',
-    paddingTop: 10,
   },
   drawerLabel: {
     fontSize: 16,

@@ -1,22 +1,46 @@
+// src/navigation/MainTabNavigator.js
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 
-// Screens
+// Importar pantallas
 import HomeScreen from '../screens/HomeScreen';
-import ScannerScreen from '../screens/ScannerScreen';
 import MapScreen from '../screens/MapScreen';
+import ScannerScreen from '../screens/ScannerScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-
-// Componentes
-import TabBar from '../components/layout/TabBar';
 
 const Tab = createBottomTabNavigator();
 
-export default function MainTabNavigator() {
+export default function MainTabNavigator({ navigation }) {
   return (
     <Tab.Navigator
-      tabBar={(props) => <TabBar {...props} />}
-      screenOptions={{
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Map') {
+            iconName = focused ? 'map' : 'map-outline';
+          } else if (route.name === 'Scanner') {
+            iconName = focused ? 'qr-code' : 'qr-code-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#4361EE',
+        tabBarInactiveTintColor: 'gray',
+        headerLeft: () => (
+          <Ionicons 
+            name="menu" 
+            size={28} 
+            color="white" 
+            style={{ marginLeft: 15 }}
+            onPress={() => navigation.toggleDrawer()}
+          />
+        ),
         headerStyle: {
           backgroundColor: '#4361EE',
         },
@@ -24,32 +48,27 @@ export default function MainTabNavigator() {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
-      }}
+      })}
     >
+      {/* ✅ SOLO Tab.Screen como hijos directos - SIN COMENTARIOS ENTRE ELLOS */}
       <Tab.Screen 
         name="Home" 
         component={HomeScreen} 
-        options={{ title: 'Eventos' }} 
+        options={{ title: 'Inicio' }} 
       />
-      <Tab.Screen 
-  name="Scanner" 
-  component={ScannerScreen} 
-  options={{ 
-    title: 'Escanear QR',
-    tabBarIcon: ({ focused, color, size }) => (
-      <Ionicons 
-        name={focused ? 'qr-code' : 'qr-code-outline'} 
-        size={size} 
-        color={color} 
-      />
-    )
-  }} 
-/>
+      
       <Tab.Screen 
         name="Map" 
         component={MapScreen} 
         options={{ title: 'Mapa' }} 
       />
+      
+      <Tab.Screen 
+        name="Scanner" 
+        component={ScannerScreen} 
+        options={{ title: 'Escaner QR' }} 
+      />
+      
       <Tab.Screen 
         name="Profile" 
         component={ProfileScreen} 
